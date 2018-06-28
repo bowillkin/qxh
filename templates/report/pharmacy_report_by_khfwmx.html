@@ -1,0 +1,125 @@
+{% extends "report/pharmacy_report.html" %}
+{% block js %}
+{{ super() }}
+<script type="text/javascript">
+    $(function(){
+        $('#assign_operator_id').select2({
+            width:'120px',
+            placeholder:'员工',
+			allowClear:true
+        });
+        $('#area').select2({
+            width:'120px',
+            placeholder:'区域',
+			allowClear:true
+        });
+        $('#register').select2({
+            width:'120px',
+            placeholder:'是否登记',
+			allowClear:true
+        });
+        $('#communication').select2({
+            width:'120px',
+            placeholder:'沟通情况',
+			allowClear:true
+        });
+        $('#isable_reason').select2({
+            width:'120px',
+            placeholder:'停用原因',
+			allowClear:true
+        });
+    });
+</script>
+{% endblock %}
+{% block report %}
+    <form action="" method="get" class="form-search inline">
+        <select id="assign_operator_id" name="assign_operator_id">
+            <option></option>
+            <option value="">所有员工</option>
+            {% set assign_operator_id = request.args.get('assign_operator_id',0)|int %}
+            {% for op in operators %}
+            <option value="{{ op.id }}" {% if op.id==assign_operator_id %}selected="selected"{% endif %}>{{ op.nickname }}</option>
+            {% endfor %}
+        </select>
+        {% set area = request.args.get('area') %}
+        <select name="area" id="area">
+        <option></option>
+        {%- for k,v in config['AREA'].iteritems() -%}
+            <option value="{{ k }}" {% if k==area %}selected="selected"{% endif %}>{{ v }}</option>
+        {%- endfor -%}
+        </select>
+        {% set register = request.args.get('register',0)|int %}
+        <select name="register" id="register">
+        <option></option>
+        <option value="1" {% if register==1 %}selected="selected"{% endif %}>是</option>
+        <option value="2" {% if register==2 %}selected="selected"{% endif %}>否</option>
+        </select>
+        {% set communication = request.args.get('communication') %}
+        <select name="communication" id="communication">
+        <option></option>
+        {%- for k,v in config['COMMUNICATIONS'].iteritems() -%}
+            <option value="{{ k }}" {% if k==communication %}selected="selected"{% endif %}>{{ v }}</option>
+        {%- endfor -%}
+        </select>
+        <input type="text" class="input-small" name="phone" placeholder="电话号码" value="{{ request.args.get('phone','') }}">
+        {% set isable_reason = request.args.get('isable_reason') %}
+        <select name="isable_reason" id="isable_reason">
+        <option></option>
+        {%- for k,v in config['ISABLEREASONS'].iteritems() -%}
+            <option value="{{ k }}" {% if k==isable_reason %}selected="selected"{% endif %}>{{ v }}</option>
+        {%- endfor -%}
+        </select>
+        <input id="start_date" name="start_date" class="timepicker" type="text" value="{{ request.args['start_date'] }}" placeholder="开始时间" />
+        <input id="end_date" name="end_date" class="timepicker" type="text" value="{{ request.args['end_date'] }}" placeholder="结束时间" />
+        <input id="start_fpdate" name="start_fpdate" class="timepicker" type="text" value="{{ request.args['start_fpdate'] }}" placeholder="分配开始时间" />
+        <input id="end_fpdate" name="end_fpdate" class="timepicker" type="text" value="{{ request.args['end_fpdate'] }}" placeholder="分配结束时间" />
+        <button type="submit" class="btn btn-success" style="margin-left: 10px"><i
+                class="icon-search icon-white"></i>
+            查询
+        </button>
+    </form>
+    <hr>
+
+    <table cellpadding="0" cellspacing="0" border="0" class="table table-bordered table-hover table-condensed" id="report">
+        <thead>
+        <tr>
+            <th>客户姓名</th>
+            <th>电话号码</th>
+            <th>分配时间</th>
+            <th>区域</th>
+            <th>是否登记</th>
+            <th>复购次数</th>
+            <th>是否领取</th>
+            <th>沟通情况</th>
+            <th>未领取原因</th>
+            <th>停用原因</th>
+            <th>员工</th>
+            <th>登记时间</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for d in data %}
+            <tr>
+            <td>{{ d.name }}</td>
+            <td>{{ d.phone }}</td>
+            <td>{{ d.assign_time }}</td>
+            <td>{{ d.area }}</td>
+            <td>{% if d.id %}已登记{%else%}未登记{%endif%}</td>
+            <td>{{ d.fgypcount }}</td>
+            <td>{% if d.receive==1 %}已领取{% elif d.receive==2 %}拒接换购{%else%}未领取{%endif%}</td>
+            <td>{{ d.communication }}</td>
+            <td>{% if d.receive!=1 %}{{ d.reason }}{%endif%}</td>
+            <td>{{ d.isable_reason }}</td>
+            <td>{{ d.nickname }}</td>
+            <td>{{ d.date }}</td>
+            </tr><font style="display:none">{{ total.append(1) }}</font>
+        {% endfor %}
+        </tbody>
+    </table>
+    <div class="alert alert-success">
+    </div>
+    <hr>
+    <blockquote class="pull-left">统计日期：<br/><span class="label label-success">{{ period }}</span></blockquote>
+    <div class="alert pull-left">记录数：{{ total|sum }}</div>
+
+{% endblock %}
